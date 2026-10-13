@@ -19,16 +19,18 @@ Copiez ce texte dans **Claude Code** ou **Codex**, et répondez à ses questions
 ```text
 Installe pour moi l'app « Qui vient quand » : https://github.com/Melpopytips/qui-vient-quand
 
-Récupère le dépôt, lis son fichier AGENTS.md et suis-le pas à pas : pose-moi les questions sur mon évènement, remplis les réglages, mets l'app en ligne sur Cloudflare (gratuit) et donne-moi le lien à partager.
+Récupère le dépôt (avec git, ou en téléchargeant son archive ZIP), lis son fichier AGENTS.md et suis-le pas à pas : pose-moi les questions sur mon évènement, remplis les réglages, mets l'app en ligne sur Cloudflare (gratuit) et donne-moi le lien à partager.
 
-Je ne suis pas développeur : explique-moi simplement ce que je dois faire moi-même, et fais le reste.
+Je ne suis pas développeur : fais toi-même tout ce que tu peux, ouvre-moi les pages dont j'ai besoin, et dis-moi simplement les seuls gestes que je dois faire.
 ```
+
+L'IA fait tout le reste. Vous n'avez que trois gestes : répondre à ses questions, créer votre compte Cloudflare dans la page qu'elle ouvre, et cliquer sur « Allow ».
 
 Ce qu'il vous faut :
 
 - **Un outil qui peut agir sur votre ordinateur** : Claude Code (l'onglet « Code » de l'application Claude pour ordinateur, ou le terminal) ou Codex. Une simple conversation sur claude.ai ou ChatGPT ne suffit pas : elle peut vous expliquer les étapes, pas les faire.
 - **Un compte Cloudflare gratuit.** L'IA vous dira quand vous connecter. Aucune carte bancaire n'est demandée.
-- **Node.js** sur l'ordinateur. Si vous ne l'avez pas, l'IA vous guide.
+- **Node.js** sur l'ordinateur. Si vous ne l'avez pas, l'IA l'installe avec votre accord.
 
 Comptez une dizaine de minutes, surtout pour répondre aux questions.
 
