@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#f7f6f3">
+<meta property="og:title" content="Qui vient quand">
+<meta property="og:description" content="Dites quelles nuits vous venez.">
+<link rel="icon" href="data:,">
+<title>Qui vient quand</title>
+<!-- Le serveur glisse ici les réglages de evenement.json -->
+<script id="evenement" type="application/json">{}</script>
+<script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}</script>
+<style>
+@font-face{font-family:"Jost";font-style:normal;font-weight:300 500;font-display:swap;src:url(/fonts/jost.woff2) format("woff2")}
+/* Le séjour dessiné comme un relevé : une colonne par nuit, un trait au nombre de couchages, les groupes alignés dessous. */
+:root{
+  color-scheme:light;
+  --bg:#f7f6f3; --surface:#ffffff; --line:#e4e1db; --ink:#17191c; --muted:#75736e;
+  --accent:#0b89ad; --extra:#8b55d6; --btn:#17191c; --on-btn:#ffffff;
+  --on-photo:#ffffff; --scrim:rgba(10,13,16,.74);
+  --shadow:0 22px 50px -24px rgba(20,24,30,.28);
+  --font:"Jost","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --r:12px; --r-card:18px; --n:7; --n7:7;
+  padding-top:env(safe-area-inset-top,0px);
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f1113; --surface:#191c1f; --line:#2c3035; --ink:#f2f0ea; --muted:#9d9b95;
+  --extra:#b892f2; --btn:#f2f0ea; --on-btn:#0f1113;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--font);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+img{max-width:100%}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.wrap{max-width:520px;margin:0 auto;padding-inline:16px;padding-block:0 calc(104px + env(safe-area-inset-bottom,0px))}
+
+.hero{position:relative;margin-inline:-16px;aspect-ratio:5/4;overflow:hidden;background:var(--line)}
+/* les photos défilent : on glisse du doigt, ou elles avancent seules */
+.slides{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
+.slides::-webkit-scrollbar{display:none}
+.slides img{flex:0 0 100%;width:100%;height:100%;max-width:none;object-fit:cover;scroll-snap-align:start;scroll-snap-stop:always}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 38%,var(--scrim));pointer-events:none}
+.hero-txt{position:absolute;left:22px;right:22px;bottom:22px;z-index:1;color:var(--on-photo);pointer-events:none}
+.hero h1{margin:0;font:300 46px/1 var(--font);text-wrap:balance;overflow-wrap:anywhere}
+.hero p{margin:10px 0 0;font-size:15px;opacity:.92}
+.marks{position:absolute;left:18px;top:23px;z-index:2;display:flex}
+.marks button{width:26px;height:22px;display:grid;place-items:center}
+.marks button::before{content:"";width:18px;height:2px;background:var(--on-photo);opacity:.45}
+.marks button[aria-current="true"]::before{opacity:1}
+.theme{position:absolute;top:14px;right:14px;z-index:2;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;background:rgba(10,13,16,.5);color:var(--on-photo)}
+.theme svg{width:18px;height:18px}
+:root[data-theme="dark"] .theme .moon,:root:not([data-theme="dark"]) .theme .sun{display:none}
+/* sans photo : le titre seul */
+.hero.plain{aspect-ratio:auto;background:none;padding:64px 22px 8px}
+.hero.plain::after,.hero.plain .slides,.hero.plain .marks{display:none}
+.hero.plain .hero-txt{position:static;color:var(--ink)}
+.hero.plain .theme{background:none;border:1px solid var(--line);color:var(--ink)}
+
+.welcome{margin-top:18px;padding:18px;background:var(--surface);border:1px solid var(--ink);border-radius:var(--r-card)}
+.welcome h2{font-size:24px}
+.welcome p{margin:8px 0 0}
+.welcome code{display:block;margin:12px 0;padding:10px 12px;background:var(--bg);border-radius:var(--r);font:400 14px/1.4 var(--font);overflow-wrap:anywhere;user-select:all;-webkit-user-select:all}
+.welcome div{display:flex;gap:10px;flex-wrap:wrap}
+
+h2{margin:0;font:300 28px/1.1 var(--font)}
+.sec{margin-top:34px}
+
+.chart-wrap{margin-top:26px;overflow-x:auto;scrollbar-width:none}
+.chart-wrap::-webkit-scrollbar{display:none}
+.chart{display:grid;grid-template-columns:repeat(var(--n),minmax(44px,1fr))}
+.col{display:flex;flex-direction:column;align-items:center;gap:6px}
+.c-val{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.c-track{position:relative;width:100%;height:76px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.c-track::before{content:"";position:absolute;left:0;right:0;bottom:var(--cap);border-top:1px dashed var(--muted);opacity:.55}
+.c-track i{display:block;width:8px;background:var(--accent)}
+.c-track i.x{background:var(--extra);border-radius:4px 4px 0 0;margin-bottom:2px}
+.c-track i.b:first-child{border-radius:4px 4px 0 0}
+.c-day{font-size:12px;color:var(--muted);margin-top:4px}
+.c-num{width:40px;height:40px;display:grid;place-items:center;border-radius:50%;font:300 22px/1 var(--font)}
+.col[aria-pressed="true"] .c-num{background:var(--ink);color:var(--bg)}
+.col[aria-pressed="true"] .c-val{color:var(--ink);font-weight:500}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px;font-size:13px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:7px}
+.legend i{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.legend i.x{background:var(--extra)}
+.legend i.l{width:16px;height:0;border-radius:0;background:none;border-top:1px dashed var(--muted)}
+
+.detail{margin-top:26px;padding-top:24px;border-top:1px solid var(--line)}
+.d-when{margin:0;font-size:14px;color:var(--muted)}
+.d-big{margin:6px 0 0;font:300 34px/1.1 var(--font)}
+.d-rows{margin:16px 0 0}
+.d-rows div{display:flex;justify-content:space-between;gap:12px;padding-block:10px;border-top:1px solid var(--line)}
+.d-rows dt{display:flex;align-items:center;gap:9px}
+.d-rows dt i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.d-rows dt i.x{background:var(--extra)}
+.d-rows dt i.o{background:none;border:1px solid var(--muted)}
+.d-rows dd{margin:0;font-variant-numeric:tabular-nums;white-space:nowrap}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-block:12px;border-top:1px solid var(--line);font-size:15px}
+.switch input{appearance:none;-webkit-appearance:none;flex:none;width:46px;height:28px;border-radius:14px;background:var(--line);position:relative;margin:0;cursor:pointer}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.switch input:checked{background:var(--extra)}
+.switch input:checked::after{left:21px}
+.names{margin:12px 0 0;font-size:15px;color:var(--muted)}
+
+.row-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.btn{padding:13px 20px;border-radius:var(--r);background:var(--btn);color:var(--on-btn);font-weight:500;font-size:15px}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.ghost{background:none;color:var(--ink);border:1px solid var(--ink)}
+
+.groups{list-style:none;margin:14px 0 0;padding:0}
+.grp{padding-block:16px;border-top:1px solid var(--line)}
+.grp-head{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left}
+.grp-name{font-size:17px;font-weight:500;min-width:0;overflow-wrap:anywhere}
+.grp-who{flex:1;color:var(--muted);font-size:14px;min-width:0}
+.grp-edit{font-size:14px;color:var(--muted);white-space:nowrap;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line)}
+.bar{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));margin-top:11px;gap:3px}
+.cell{height:3px;background:var(--line)}
+.cell.on{background:var(--ink)}
+.grp.open{padding:20px 18px;margin-block:8px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--shadow)}
+.grp.open + .grp{border-top:0}
+.empty{padding-block:18px;border-top:1px solid var(--line);color:var(--muted)}
+.empty button{color:var(--ink);text-decoration:underline;text-underline-offset:4px;margin-left:6px}
+.field{display:block;width:100%;padding:4px 0 10px;background:none;border:0;border-bottom:1px solid var(--ink);border-radius:0;font:300 26px/1.2 var(--font)}
+.field::placeholder{color:var(--muted)}
+.field:focus{outline:0;border-bottom-color:var(--accent)}
+.step{display:flex;align-items:center;justify-content:space-between;padding-block:12px;border-bottom:1px solid var(--line)}
+.pm{display:flex;align-items:center;gap:6px}
+.pm button{width:42px;height:42px;border:1px solid var(--line);border-radius:50%;font-size:20px;line-height:1}
+.pm button:disabled{opacity:.3;cursor:default}
+.pm output{width:34px;text-align:center;font-size:19px;font-weight:500;font-variant-numeric:tabular-nums}
+.ask{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:18px 0 10px;font-size:14px;color:var(--muted)}
+.togs{display:grid;grid-template-columns:repeat(var(--n7),minmax(0,56px));gap:5px}
+.tog{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:50%;color:var(--muted)}
+.tog span{font-size:10px;line-height:1.1}
+.tog b{font:300 18px/1 var(--font)}
+.tog[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.sync{min-height:21px;margin:16px 0 0;font-size:14px;color:var(--muted)}
+.sync.warn{color:var(--ink);font-weight:500}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:8px}
+.link{font-size:14px;color:var(--muted);text-decoration:underline;text-underline-offset:4px;white-space:nowrap}
+
+.share{margin-top:30px;display:flex;flex-direction:column}
+
+.rooms{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.room{display:flex;flex-direction:column;gap:2px;padding:16px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);min-width:0}
+.room h3{margin:0;font:300 22px/1.1 var(--font);overflow-wrap:anywhere}
+.room p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.room input{width:100%;margin-top:8px;padding:8px 0 6px;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;font-size:16px;min-width:0}
+.room input:focus{outline:0;border-bottom-color:var(--accent)}
+.room input::placeholder{color:var(--muted)}
+
+.facts{margin:22px 0 0}
+.facts div{display:flex;gap:14px;padding-block:13px;border-top:1px solid var(--line)}
+.facts dt{flex:0 0 92px;color:var(--muted);font-size:14px;overflow-wrap:anywhere}
+.facts dd{margin:0;flex:1;min-width:0;overflow-wrap:anywhere}
+.out{display:inline-block;margin-top:20px;color:var(--ink);text-underline-offset:4px}
+
+.bottom{position:fixed;left:0;right:0;bottom:0}
+.net{margin:0;padding:10px 16px;background:var(--ink);color:var(--bg);font-size:14px;text-align:center}
+.tabs{display:flex;justify-content:center;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs div{display:flex;width:100%;max-width:520px}
+.tabs button{flex:1;padding:17px 4px 16px;font-size:15px;color:var(--muted);position:relative}
+.tabs button[aria-selected="true"]{color:var(--ink);font-weight:500}
+.tabs button[aria-selected="true"]::after{content:"";position:absolute;left:50%;bottom:9px;width:18px;height:1px;margin-left:-9px;background:var(--ink)}
+@media (prefers-reduced-motion:no-preference){.c-track i{transition:height .3s ease}.switch input::after{transition:left .18s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero" id="hero">
+    <div class="slides" id="slides" aria-label="Photos"></div>
+    <div class="marks" id="marks"></div>
+    <button type="button" class="theme" id="theme" aria-label="Passer en clair ou en sombre">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3 7 7M17 17l1.7 1.7M18.7 5.3 17 7M7 17l-1.7 1.7"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.2 8.2 0 1 0 10.2 10.2Z"/></svg>
+    </button>
+    <div class="hero-txt">
+      <h1 id="titre"></h1>
+      <p id="soustitre"></p>
+    </div>
+  </header>
+
+  <section class="welcome" id="welcome" hidden>
+    <h2>Votre lien est prêt</h2>
+    <p>Partagez cette adresse, et seulement elle. Sans la clé qu'elle contient, personne n'entre.</p>
+    <code id="lien"></code>
+    <div><button type="button" class="btn" id="copier">Copier le lien</button><button type="button" class="btn ghost" id="compris">J'ai noté</button></div>
+  </section>
+
+  <main>
+    <section id="p-sejour">
+      <div class="chart-wrap"><div class="chart" id="chart"></div></div>
+      <div class="legend"><span><i></i>dans les lits</span><span><i class="x"></i>hors des lits</span><span><i class="l"></i><b id="leg-cap" style="font-weight:400"></b></span></div>
+      <div class="detail" id="detail"></div>
+
+      <div class="sec">
+        <div class="row-title"><h2>Qui vient</h2><button type="button" class="btn" id="add" disabled>Ajouter mon groupe</button></div>
+        <ul class="groups" id="groups"></ul>
+      </div>
+
+      <div class="share">
+        <button type="button" class="btn ghost" id="share">Envoyer le point sur WhatsApp</button>
+      </div>
+    </section>
+
+    <section id="p-couchages" hidden>
+      <div class="sec"><h2 id="titre-couchages"></h2></div>
+      <div class="rooms" id="rooms"></div>
+    </section>
+
+    <section id="p-infos" hidden>
+      <dl class="facts" id="facts"></dl>
+      <a class="out" id="out" target="_blank" rel="noopener noreferrer" hidden></a>
+    </section>
+  </main>
+</div>
+
+<div class="bottom">
+  <p class="net" id="net" role="status" hidden>Pas de connexion. Vos changements partiront dès qu'elle revient.</p>
+  <nav class="tabs" id="tabs" aria-label="Sections"><div role="tablist">
+    <button type="button" role="tab" id="t-sejour" aria-selected="true">Séjour</button>
+    <button type="button" role="tab" id="t-couchages" aria-selected="false">Couchages</button>
+    <button type="button" role="tab" id="t-infos" aria-selected="false">Infos</button>
+  </div></nav>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  function $(id){return document.getElementById(id)}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function pl(n,one,many){return n+' '+(n>1?many:one)}
+  function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+
+  /* ---------- les réglages de l'évènement ---------- */
+  var EV={};try{EV=JSON.parse($('evenement').textContent||'{}')}catch(e){}
+  var params=new URLSearchParams(location.search), KEY=params.get('k')||'';
+  var N=EV.nombre_de_nuits|0, BEDS=EV.couchages|0;
+  var PIECES=Array.isArray(EV.pieces)?EV.pieces:[];
+  var DORTOIR=EV.dortoir_enfants&&EV.dortoir_enfants.lieu?EV.dortoir_enfants:null;
+  var APPOINT=EV.appoint||'en appoint';
+  var root=document.documentElement;
+  root.style.setProperty('--n',N||1);root.style.setProperty('--n7',Math.min(N||1,7));
+  if(/^#[0-9a-f]{6}$/i.test(EV.couleur||''))root.style.setProperty('--accent',EV.couleur);
+
+  var debut=(EV.premiere_nuit||'2000-01-01').split('-').map(Number);
+  function jour(i){return new Date(Date.UTC(debut[0],debut[1]-1,debut[2]+i,12))}
+  var fCourt=new Intl.DateTimeFormat('fr-FR',{weekday:'short',timeZone:'UTC'});
+  var fLong=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
+  var fDate=new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'long',timeZone:'UTC'});
+  function premier(s){return s.replace(/(^| )1 /,'$11er ')}
+  var NIGHTS=[];for(var q=0;q<N;q++){var dj=jour(q);NIGHTS.push([fCourt.format(dj),String(dj.getUTCDate()),premier(fLong.format(dj))])}
+  var PERIODE='du '+premier(fDate.format(jour(0)))+' au '+premier(fDate.format(jour(N)));
+  var VIDE=new Array(N+1).join('0'), NUITS_RE=new RegExp('^[01]{'+N+'}$');
+  var DORTOIR_DEFAUT=VIDE.split('').map(function(_,i){return DORTOIR&&Array.isArray(DORTOIR.nuits)&&DORTOIR.nuits.indexOf(i+1)>=0?'1':'0'}).join('');
+
+  document.title=EV.nom||'Qui vient quand';
+  $('titre').textContent=EV.nom||'';
+  $('soustitre').textContent=[EV.lieu,PERIODE].filter(Boolean).join(', ');
+  $('leg-cap').textContent=pl(BEDS,'couchage','couchages');
+
+  var groups=[], notes={}, etat='chargement';   // chargement | pret | erreur | refus
+  var sel=nuitDuJour(), openId=null, confirmId=null, focusId=null, manque=false, horsLigne=false;
+  var dirty={}, dels={}, dirtyNotes={}, timers={};
+
+  function who(g){return pl(g.a,'adulte','adultes')+(g.e?', '+pl(g.e,'enfant','enfants'):'')}
+  function nameOf(g){return g.nom.trim()||'Sans nom'}
+  function byId(id){for(var i=0;i<groups.length;i++)if(groups[i].id===id)return groups[i];return null}
+  function cur(){return openId?byId(openId):null}
+  function nuitDuJour(){var i=Math.floor((Date.now()-Date.UTC(debut[0],debut[1]-1,debut[2]))/864e5);return i>=0&&i<N?i:0}
+  function dortoir(){return NUITS_RE.test(notes.dortoir||'')?notes.dortoir:DORTOIR_DEFAUT}
+  function uuid(){
+    if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();
+    var b=crypto.getRandomValues(new Uint8Array(16));b[6]=b[6]&15|64;b[8]=b[8]&63|128;
+    var h=Array.prototype.map.call(b,function(x){return (x+256).toString(16).slice(1)}).join('');
+    return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);
+  }
+  // Une nuit : qui est dans un lit, qui est au dortoir (les enfants, si activé), qui est en appoint.
+  function stat(i){
+    var a=0,e=0,d=!!DORTOIR&&dortoir()[i]==='1';groups.forEach(function(g){if(g.n[i]){a+=g.a;e+=g.e}});
+    var want=d?a:a+e,beds=Math.min(want,BEDS);
+    return {total:a+e,beds:beds,kids:d?e:0,sofa:want-beds,free:BEDS-beds};
+  }
+
+  /* ---------- échanges avec le serveur ---------- */
+  function api(method,path,body){
+    return fetch('/api/'+path,{method:method,keepalive:true,headers:{'content-type':'application/json','x-cle':KEY},body:body?JSON.stringify(body):undefined})
+      .then(function(r){if(!r.ok)throw new Error(String(r.status));return r.json()});
+  }
+  function setHL(v){horsLigne=v;$('net').hidden=!v;majSync()}
+  function payload(g){return {nom:g.nom.trim(),adultes:g.a,enfants:g.e,nuits:g.n.join('')}}
+  function touch(g){
+    if(!g.nom.trim()){majSync();return}
+    manque=false;dirty[g.id]=1;clearTimeout(timers[g.id]);
+    timers[g.id]=setTimeout(function(){push(g.id)},500);majSync();
+  }
+  function push(id){
+    var g=byId(id);clearTimeout(timers[id]);
+    if(!g||!g.nom.trim()){delete dirty[id];return}
+    var p=payload(g),envoye=JSON.stringify(p);
+    api('PUT','groupes/'+id,p).then(function(){
+      var now=byId(id);
+      if(now){now.saved=true;if(JSON.stringify(payload(now))===envoye)delete dirty[id]}
+      setHL(false);
+    }).catch(function(){setHL(true)});
+  }
+  function suppr(id){api('DELETE','groupes/'+id).then(function(){delete dels[id];setHL(false)}).catch(function(){setHL(true)})}
+  function setNote(cle,val){notes[cle]=val;dirtyNotes[cle]=val;clearTimeout(timers['n'+cle]);timers['n'+cle]=setTimeout(function(){pushNote(cle)},600)}
+  function pushNote(cle){
+    clearTimeout(timers['n'+cle]);var val=dirtyNotes[cle];if(val===undefined)return;
+    api('PUT','notes/'+cle,{valeur:val}).then(function(){if(dirtyNotes[cle]===val)delete dirtyNotes[cle];setHL(false)}).catch(function(){setHL(true)});
+  }
+  function flush(){Object.keys(dels).forEach(suppr);Object.keys(dirty).forEach(push);Object.keys(dirtyNotes).forEach(pushNote)}
+  function pull(){
+    return api('GET','etat').then(function(d){
+      var local={},vus={};groups.forEach(function(g){local[g.id]=g});
+      // On garde la version locale de ce qui est en cours de saisie ou pas encore parti.
+      var serveur=d.groupes.filter(function(r){return !dels[r.id]}).map(function(r){
+        vus[r.id]=1;var l=local[r.id];
+        if(l&&(dirty[r.id]||r.id===openId)){l.saved=true;return l}
+        return {id:r.id,nom:r.nom,a:r.adultes,e:r.enfants,n:(NUITS_RE.test(r.nuits)?r.nuits:VIDE).split('').map(Number),saved:true};
+      });
+      var neufs=groups.filter(function(g){return !vus[g.id]&&(!g.saved||dirty[g.id]||g.id===openId)});
+      groups=neufs.concat(serveur);
+      Object.keys(d.notes).forEach(function(k){if(!(k in dirtyNotes))notes[k]=d.notes[k]});
+      etat='pret';setHL(false);
+      if(openId===null){var a=document.activeElement;if(a&&a.id&&a.tagName==='BUTTON')focusId=a.id;render()}else renderWeek();
+      fillRooms();
+    }).catch(function(err){
+      if(err.message==='403')etat='refus';else if(etat!=='pret')etat='erreur';else{setHL(true);return}
+      render();
+    });
+  }
+  function tick(){if(document.visibilityState==='visible'){flush();pull()}}
+
+  /* ---------- affichage ---------- */
+  function renderWeek(){
+    var st=NIGHTS.map(function(n,i){return stat(i)});
+    var max=Math.max.apply(null,st.map(function(s){return s.total}).concat(Math.ceil(BEDS*1.25)));
+    $('chart').style.setProperty('--cap',(BEDS/max*100)+'%');
+    $('chart').innerHTML=NIGHTS.map(function(n,i){var s=st[i],x=s.total-s.beds;
+      return '<button type="button" class="col" data-night="'+i+'" id="night'+i+'" aria-pressed="'+(i===sel)+'" aria-label="Nuit du '+n[2]+', '+s.total+' personnes"><span class="c-val">'+s.total+'</span><span class="c-track">'+(x?'<i class="x" style="height:'+(x/max*100)+'%"></i>':'')+'<i class="b" style="height:'+(s.beds/max*100)+'%"></i></span><span class="c-day">'+n[0]+'</span><span class="c-num">'+n[1]+'</span></button>'}).join('');
+    if(!N)return;
+    var s=st[sel],here=groups.filter(function(g){return g.n[sel]});
+    var rows='<div><dt><i></i>Dans les lits</dt><dd>'+s.beds+' sur '+BEDS+'</dd></div>';
+    if(s.kids)rows+='<div><dt><i class="x"></i>Enfants '+esc(DORTOIR.lieu)+'</dt><dd>'+s.kids+'</dd></div>';
+    if(s.sofa)rows+='<div><dt><i class="x"></i>'+esc(cap(APPOINT))+'</dt><dd>'+s.sofa+'</dd></div>';
+    if(s.free)rows+='<div><dt><i class="o"></i>Lits libres</dt><dd>'+s.free+'</dd></div>';
+    $('detail').innerHTML='<p class="d-when">Nuit du '+NIGHTS[sel][2]+'</p><p class="d-big">'+(s.total?s.total+' sur place':'Personne pour l\'instant')+'</p><dl class="d-rows">'+rows+'</dl>'
+      +(DORTOIR?'<label class="switch" for="dortoir">Les enfants dorment '+esc(DORTOIR.lieu)+'<input type="checkbox" id="dortoir"'+(dortoir()[sel]==='1'?' checked':'')+(etat==='pret'?'':' disabled')+'></label>':'')
+      +(here.length?'<p class="names">'+here.map(function(g){return esc(nameOf(g))}).join(', ')+'</p>':'');
+  }
+
+  function renderGroups(){
+    $('add').disabled=etat!=='pret';
+    if(!groups.length){
+      $('groups').innerHTML='<li class="empty">'+(etat==='chargement'?'Chargement…':etat==='refus'?'Ce lien n\'est pas complet. Redemandez-le à la personne qui organise.':etat==='erreur'?'Le séjour ne se charge pas. Vérifiez la connexion.<button type="button" id="retry">Réessayer</button>':'Personne n\'est encore inscrit.')+'</li>';
+      return;
+    }
+    $('groups').innerHTML=groups.map(function(g){var open=g.id===openId,nb=g.n.reduce(function(a,b){return a+b},0);
+      if(!open)return '<li class="grp"><button type="button" class="grp-head" data-open="'+g.id+'" id="g'+g.id+'"><span class="grp-name">'+esc(nameOf(g))+'</span><span class="grp-who">'+who(g)+'</span><span class="grp-edit">Modifier</span></button><div class="bar">'+g.n.map(function(v){return '<span class="cell'+(v?' on':'')+'"></span>'}).join('')+'</div></li>';
+      function step(k,label,min){return '<div class="step"><span>'+label+'</span><span class="pm"><button type="button" data-step="'+k+'" data-d="-1" id="m'+k+g.id+'" aria-label="Retirer : '+label+'"'+(g[k]<=min?' disabled':'')+'>−</button><output>'+g[k]+'</output><button type="button" data-step="'+k+'" data-d="1" id="p'+k+g.id+'" aria-label="Ajouter : '+label+'"'+(g[k]>=30?' disabled':'')+'>+</button></span></div>'}
+      return '<li class="grp open"><input class="field" id="nom'+g.id+'" value="'+esc(g.nom)+'" maxlength="60" placeholder="Prénom ou famille" autocomplete="off" autocapitalize="words" enterkeyhint="done" aria-label="Nom du groupe">'
+        +step('a','Adultes',1)+step('e','Enfants',0)
+        +'<p class="ask"><span>Touchez les nuits où vous dormez sur place. '+(nb?pl(nb,'nuit','nuits')+'.':'')+'</span>'+(N>1&&nb<N?'<button type="button" class="link" data-tout="1" id="tout'+g.id+'">Tout le séjour</button>':'')+'</p>'
+        +'<div class="togs">'+g.n.map(function(v,i){return '<button type="button" class="tog" data-tog="'+i+'" id="tog'+g.id+'_'+i+'" aria-pressed="'+!!v+'" aria-label="Nuit du '+NIGHTS[i][2]+'"><span>'+NIGHTS[i][0]+'</span><b>'+NIGHTS[i][1]+'</b></button>'}).join('')+'</div>'
+        +'<p class="sync" id="sync" aria-live="polite"></p>'
+        +'<div class="foot">'+(confirmId===g.id
+          ?'<span>Retirer '+esc(nameOf(g))+' ?</span><span><button type="button" class="link" data-yes="1" id="yes'+g.id+'">Oui, retirer</button> &nbsp; <button type="button" class="link" data-no="1" id="no'+g.id+'">Annuler</button></span>'
+          :'<button type="button" class="link" data-remove="1" id="rm'+g.id+'">Retirer du séjour</button><button type="button" class="btn" data-close="1" id="ok'+g.id+'">Terminé</button>')+'</div></li>'}).join('');
+  }
+  function majSync(){
+    var el=$('sync'),g=cur();if(!el||!g)return;
+    var vide=!g.nom.trim(),nb=g.n.reduce(function(a,b){return a+b},0);
+    el.textContent=manque&&vide?'Écrivez un prénom pour enregistrer.':vide?'':dirty[g.id]?(horsLigne?'Pas encore enregistré.':'Enregistrement…'):!nb?'Aucune nuit cochée pour l\'instant.':g.saved?'Enregistré':'';
+    el.className='sync'+(manque&&vide?' warn':'');
+  }
+  function render(){
+    renderWeek();renderGroups();majSync();
+    if(focusId){var el=$(focusId);if(el)el.focus({preventScroll:focusId.indexOf('nom')!==0});focusId=null}
+  }
+  function fillRooms(){PIECES.forEach(function(r,i){var el=$('piece'+i);if(!el)return;el.disabled=etat!=='pret';if(document.activeElement!==el&&!(('piece'+i) in dirtyNotes))el.value=notes['piece'+i]||''})}
+
+  /* ---------- gestes ---------- */
+  $('chart').addEventListener('click',function(ev){var b=ev.target.closest('[data-night]');if(!b)return;sel=+b.dataset.night;focusId=b.id;render()});
+  $('detail').addEventListener('change',function(ev){
+    if(ev.target.id!=='dortoir')return;
+    var d=dortoir().split('');d[sel]=ev.target.checked?'1':'0';setNote('dortoir',d.join(''));focusId='dortoir';render();
+  });
+  $('groups').addEventListener('input',function(ev){var g=cur();if(g&&ev.target.classList.contains('field')){g.nom=ev.target.value;touch(g);renderWeek()}});
+  $('groups').addEventListener('keydown',function(ev){if(ev.key==='Enter'&&ev.target.classList.contains('field'))ev.target.blur()});
+  $('groups').addEventListener('click',function(ev){
+    var b=ev.target.closest('button');if(!b)return;
+    if(b.id==='retry'){etat='chargement';render();pull();return}
+    var g=cur();
+    if(b.dataset.open){
+      if(g&&!g.nom.trim()){manque=true;focusId='nom'+g.id}
+      else{if(g&&dirty[g.id])push(g.id);openId=b.dataset.open;confirmId=null;manque=false;focusId='ok'+openId}
+    }
+    else if(!g)return;
+    else if(b.dataset.step){var k=b.dataset.step;g[k]=Math.min(30,Math.max(k==='a'?1:0,g[k]+(+b.dataset.d)));focusId=b.id;touch(g)}
+    else if(b.dataset.tog){var i=+b.dataset.tog;g.n[i]=g.n[i]?0:1;sel=i;focusId=b.id;touch(g)}
+    else if(b.dataset.tout){g.n=g.n.map(function(){return 1});focusId='ok'+g.id;touch(g)}
+    else if(b.dataset.remove){confirmId=g.id;focusId='no'+g.id}
+    else if(b.dataset.no){confirmId=null;focusId='rm'+g.id}
+    else if(b.dataset.yes){
+      clearTimeout(timers[g.id]);delete dirty[g.id];
+      if(g.saved){dels[g.id]=1;suppr(g.id)}
+      groups=groups.filter(function(x){return x!==g});openId=confirmId=null;manque=false;focusId='add';
+    }
+    else if(b.dataset.close){
+      if(!g.nom.trim()){manque=true;focusId='nom'+g.id}
+      else{if(dirty[g.id])push(g.id);openId=null;manque=false;focusId='g'+g.id}
+    }
+    render();
+  });
+  $('add').addEventListener('click',function(){
+    var g=cur();
+    if(g&&!g.nom.trim()){manque=true;focusId='nom'+g.id;render();return}
+    if(g&&dirty[g.id])push(g.id);
+    // Aucune nuit cochée au départ : on touche celles où l'on vient.
+    g={id:uuid(),nom:'',a:2,e:0,n:VIDE.split('').map(Number),saved:false};
+    groups.unshift(g);openId=g.id;confirmId=null;manque=false;focusId='nom'+g.id;render();
+  });
+
+  function lienComplet(){return location.origin+'/?k='+encodeURIComponent(KEY)}
+  $('share').addEventListener('click',function(){
+    var lines=[[EV.nom,PERIODE].join(', '),''];
+    NIGHTS.forEach(function(n,i){var s=stat(i),p=[];
+      if(s.kids)p.push(pl(s.kids,'enfant','enfants')+' '+DORTOIR.lieu);
+      if(s.sofa)p.push(s.sofa+' '+APPOINT);
+      if(s.free)p.push(pl(s.free,'lit libre','lits libres'));
+      lines.push(n[0]+' '+n[1]+' : '+s.total+' sur place'+(p.length?', '+p.join(', '):', complet'))});
+    lines.push('','Pour dire quelles nuits vous venez :',lienComplet());
+    window.open('https://wa.me/?text='+encodeURIComponent(lines.join('\n')),'_blank','noopener,noreferrer');
+  });
+
+  /* ---------- couchages et infos ---------- */
+  $('titre-couchages').textContent=pl(BEDS,'couchage','couchages');
+  $('rooms').innerHTML=PIECES.map(function(r,i){return '<div class="room"><h3>'+esc(r.nom||'')+'</h3>'+(r.detail?'<p>'+esc(r.detail)+'</p>':'')+'<input id="piece'+i+'" data-cle="piece'+i+'" maxlength="120" placeholder="Qui dort ici ?" autocomplete="off" disabled aria-label="Qui dort ici : '+esc(r.nom||'')+'"></div>'}).join('');
+  $('rooms').addEventListener('input',function(ev){var c=ev.target.dataset.cle;if(c)setNote(c,ev.target.value.slice(0,120))});
+
+  var INFOS=Array.isArray(EV.infos)?EV.infos.filter(function(x){return x&&x.titre&&x.texte}):[];
+  $('facts').innerHTML=INFOS.map(function(x){return '<div><dt>'+esc(x.titre)+'</dt><dd>'+esc(x.texte)+'</dd></div>'}).join('');
+  var LIEN=EV.lien&&/^https:\/\//.test(EV.lien.url||'')?EV.lien:null;
+  if(LIEN){$('out').href=LIEN.url;$('out').textContent=LIEN.texte||'En savoir plus';$('out').hidden=false}
+
+  var TABS=['sejour'];if(PIECES.length)TABS.push('couchages');if(INFOS.length||LIEN)TABS.push('infos');
+  ['couchages','infos'].forEach(function(t){if(TABS.indexOf(t)<0)$('t-'+t).hidden=true});
+  if(TABS.length<2)$('tabs').hidden=true;
+  function showTab(t){
+    ['sejour','couchages','infos'].forEach(function(x){$('p-'+x).hidden=x!==t;$('t-'+x).setAttribute('aria-selected',x===t)});
+    try{sessionStorage.setItem('onglet',t)}catch(e){}
+  }
+  TABS.forEach(function(t){$('t-'+t).addEventListener('click',function(){showTab(t);window.scrollTo(0,0)})});
+  try{var t0=sessionStorage.getItem('onglet');if(TABS.indexOf(t0)>0)showTab(t0)}catch(e){}
+
+  /* ---------- photos du haut ---------- */
+  var slides=$('slides'), marks=$('marks'), touche=0, attente=0;
+  (Array.isArray(EV.photos)?EV.photos:[]).slice(0,8).forEach(function(nom,i){
+    var im=document.createElement('img');im.alt='';if(i)im.loading='lazy';
+    im.addEventListener('error',function(){im.remove();majMarks()});
+    im.src='/photos/'+String(nom).split('/').map(encodeURIComponent).join('/');slides.appendChild(im);
+  });
+  function nPhotos(){return slides.querySelectorAll('img').length}
+  function photo(){return Math.round(slides.scrollLeft/(slides.clientWidth||1))}
+  function majMarks(){
+    var n=nPhotos(),i=photo(),h='';
+    $('hero').classList.toggle('plain',!n);
+    for(var k=0;k<n;k++)h+='<button type="button" data-photo="'+k+'" aria-label="Photo '+(k+1)+' sur '+n+'" aria-current="'+(k===i)+'"></button>';
+    marks.innerHTML=h;marks.hidden=n<2;
+  }
+  function allerPhoto(i){slides.scrollTo({left:i*slides.clientWidth,behavior:'smooth'})}
+  slides.addEventListener('scroll',function(){
+    if(attente)return;
+    attente=requestAnimationFrame(function(){attente=0;var i=photo();Array.prototype.forEach.call(marks.children,function(b,k){b.setAttribute('aria-current',k===i)})});
+  },{passive:true});
+  slides.addEventListener('pointerdown',function(){touche=Date.now()},{passive:true});
+  marks.addEventListener('click',function(ev){var b=ev.target.closest('[data-photo]');if(!b)return;touche=Date.now();allerPhoto(+b.dataset.photo)});
+  majMarks();
+  if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)){
+    setInterval(function(){
+      var n=nPhotos();
+      if(n<2||document.visibilityState!=='visible'||Date.now()-touche<12000||window.scrollY>slides.clientHeight)return;
+      allerPhoto((photo()+1)%n);
+    },5000);
+  }
+
+  $('theme').addEventListener('click',function(){
+    var d=root.dataset.theme==='dark'?'light':'dark';root.dataset.theme=d;
+    try{localStorage.setItem('theme',d)}catch(e){}
+  });
+
+  /* ---------- première visite : on montre le lien à partager ---------- */
+  if(params.get('bienvenue')){
+    $('lien').textContent=lienComplet();$('welcome').hidden=false;
+    try{history.replaceState(null,'','/?k='+encodeURIComponent(KEY))}catch(e){}
+    $('copier').addEventListener('click',function(){
+      var b=this;function ok(){b.textContent='Lien copié'}
+      function secours(){var r=document.createRange();r.selectNodeContents($('lien'));var s=getSelection();s.removeAllRanges();s.addRange(r)}
+      if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(lienComplet()).then(ok,secours);else secours();
+    });
+    $('compris').addEventListener('click',function(){$('welcome').hidden=true});
+  }
+
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')tick();else flush()});
+  window.addEventListener('pagehide',flush);
+  window.addEventListener('online',tick);
+  setInterval(tick,15000);
+  render();pull();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "nom": "Week-end à la montagne",
+  "lieu": "Annecy",
+  "premiere_nuit": "2027-02-12",
+  "nombre_de_nuits": 3,
+  "couchages": 10,
+  "appoint": "sur les canapés",
+  "dortoir_enfants": { "lieu": "dans le salon", "nuits": [] },
+  "pieces": [
+    { "nom": "Chambre 1", "detail": "1 lit double" },
+    { "nom": "Chambre 2", "detail": "1 lit double" },
+    { "nom": "Chambre 3", "detail": "2 lits simples" },
+    { "nom": "Dortoir", "detail": "4 lits superposés" }
+  ],
+  "infos": [
+    { "titre": "Arrivée", "texte": "Vendredi 12 février, à partir de 17 h." },
+    { "titre": "Départ", "texte": "Lundi 15 février, avant 10 h." },
+    { "titre": "À prévoir", "texte": "Draps fournis. Chacun apporte un plat pour le premier soir." }
+  ],
+  "lien": { "texte": "Voir l'annonce", "url": "" },
+  "photos": [],
+  "couleur": "#0b89ad"
+}

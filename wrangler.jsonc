@@ -1,0 +1,11 @@
+{
+  // Le nom du site : il apparaît dans l'adresse (nom.votre-compte.workers.dev).
+  // Un nom par évènement, en minuscules, sans espace ni accent.
+  "name": "qui-vient-quand",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-09-01",
+  // Tout passe par src/worker.js, qui vérifie la clé du lien avant de servir la page.
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
+  // La base est créée toute seule à la première mise en ligne.
+  "d1_databases": [{ "binding": "DB" }]
+}

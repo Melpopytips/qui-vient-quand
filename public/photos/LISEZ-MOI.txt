@@ -1,0 +1,4 @@
+Rangez ici les photos du lieu (vos propres photos), puis listez leurs noms
+dans evenement.json, champ "photos". Exemple : "photos": ["salon.jpg", "terrasse.jpg"]
+
+Sans photo, la page affiche le titre seul.
