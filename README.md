@@ -95,4 +95,4 @@ Le lien contient une clé. **Le lien est la clé** : quiconque l'a peut voir et 
 
 Cette app a été faite pour un vrai séjour en famille, et pour la question que tout le monde posait : « il reste de la place samedi ? ».
 
-Par [Mélanie Chenavard](https://github.com/Melpopytips). Licence MIT : utilisez-la, modifiez-la, partagez-la.
+Par [Mélanie Chenavard](https://github.com/Melpopytips). Licence MIT : utilisez-la, modifiez-la, partagez-la. La police Jost (dossier `public/fonts`) est sous licence SIL Open Font License.
